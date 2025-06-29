@@ -75,7 +75,7 @@ test-smoke: ## Run smoke tests
 test-e2e: ## Run end-to-end tests
 	@echo "🎭 Running E2E tests..."
 	@mkdir -p tmp
-	TMPDIR=$(PWD)/tmp go test -tags=e2e -timeout=60s ./tests/e2e/...
+	TMPDIR=$(PWD)/tmp CGO_ENABLED=0 go test -tags=e2e -timeout=60s ./tests/e2e/...
 
 test-all: test-unit test-integration test-smoke test-e2e ## Run all test categories
 	@echo "✅ All tests completed"
