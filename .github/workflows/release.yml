@@ -1,0 +1,199 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    name: Test Before Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+        cache: true
+
+    - name: Install tools
+      run: make setup
+
+    - name: Run quality checks
+      run: make check
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+        cache: true
+
+    - name: Install GoReleaser
+      uses: goreleaser/goreleaser-action@v5
+      with:
+        install-only: true
+
+    - name: Cross-platform build
+      run: |
+        mkdir -p dist
+        
+        # Build for multiple platforms
+        GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o dist/cli-linux-amd64 ./cmd/cli
+        GOOS=linux GOARCH=arm64 go build -ldflags="-w -s" -o dist/cli-linux-arm64 ./cmd/cli
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -o dist/cli-darwin-amd64 ./cmd/cli
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -o dist/cli-darwin-arm64 ./cmd/cli
+        GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -o dist/cli-windows-amd64.exe ./cmd/cli
+        
+        GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o dist/server-linux-amd64 ./cmd/server
+        GOOS=linux GOARCH=arm64 go build -ldflags="-w -s" -o dist/server-linux-arm64 ./cmd/server
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -o dist/server-darwin-amd64 ./cmd/server
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -o dist/server-darwin-arm64 ./cmd/server
+        
+        GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o dist/worker-linux-amd64 ./cmd/worker
+        GOOS=linux GOARCH=arm64 go build -ldflags="-w -s" -o dist/worker-linux-arm64 ./cmd/worker
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -o dist/worker-darwin-amd64 ./cmd/worker
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -o dist/worker-darwin-arm64 ./cmd/worker
+
+    - name: Create checksums
+      run: |
+        cd dist
+        sha256sum * > checksums.txt
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Extract version from tag
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Generate release notes
+        cat > release_notes.md << EOF
+        # Release $VERSION
+        
+        ## What's Changed
+        
+        This release includes:
+        - Go ${{ steps.go.outputs.go-version }} compatibility
+        - Security updates and vulnerability fixes
+        - Performance improvements
+        - Bug fixes and stability improvements
+        
+        ## Installation
+        
+        ### Download Binary
+        Download the appropriate binary for your platform from the assets below.
+        
+        ### Docker Images
+        \`\`\`bash
+        docker pull ghcr.io/${{ github.repository }}:$VERSION
+        \`\`\`
+        
+        ### Go Install
+        \`\`\`bash
+        go install github.com/${{ github.repository }}/cmd/cli@$VERSION
+        \`\`\`
+        
+        ## Checksums
+        
+        Verify your download with SHA256 checksums:
+        \`\`\`
+        $(cat dist/checksums.txt)
+        \`\`\`
+        EOF
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: release_notes.md
+        files: |
+          dist/cli-*
+          dist/server-*
+          dist/worker-*
+          dist/checksums.txt
+        generate_release_notes: true
+        make_latest: true
+
+  docker:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push CLI image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: cli
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:cli-latest
+          ghcr.io/${{ github.repository }}:cli-v${{ steps.version.outputs.VERSION }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push server image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: server
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:latest
+          ghcr.io/${{ github.repository }}:v${{ steps.version.outputs.VERSION }}
+          ghcr.io/${{ github.repository }}:server-latest
+          ghcr.io/${{ github.repository }}:server-v${{ steps.version.outputs.VERSION }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push worker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: worker
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:worker-latest
+          ghcr.io/${{ github.repository }}:worker-v${{ steps.version.outputs.VERSION }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

@@ -1,0 +1,77 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - govet          # Core vet analyzers
+    - staticcheck    # Advanced static analysis
+    - revive         # Style and comment linting
+    - gofumpt        # Stricter gofmt
+    - errcheck       # Check for unchecked errors
+    - ineffassign    # Detect ineffectual assignments
+    - unused         # Detect unused code
+    - gosec          # Security analysis
+    - misspell       # Typo detection
+    - gocyclo        # Complexity analysis
+    - dupl           # Code duplication detection
+    - gosimple       # Simplification suggestions
+    - unconvert      # Unnecessary type conversions
+    - unparam        # Unused function parameters
+    - exportloopref  # Loop variable capture
+    - bodyclose      # HTTP response body close
+    - nilerr         # Nil error returns
+    - prealloc       # Slice preallocation
+
+linters-settings:
+  gofumpt:
+    extra-rules: true
+    
+  gosec:
+    severity: "medium"
+    confidence: "medium"
+    
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+      - name: package-comments
+        disabled: false
+      - name: var-naming
+        disabled: false
+      - name: function-result-limit
+        arguments: [3]
+      - name: line-length-limit
+        arguments: [120]
+        
+  gocyclo:
+    min-complexity: 15
+    
+  dupl:
+    threshold: 100
+    
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    
+  staticcheck:
+    checks: ["all"]
+
+issues:
+  # Don't report on generated files
+  exclude-rules:
+    - path: ".*\\.pb\\.go$"
+      linters:
+        - all
+    - path: ".*_test\\.go$"
+      linters:
+        - dupl
+        - gosec
+    - text: "Use of weak random number generator"
+      linters:
+        - gosec
+      path: ".*_test\\.go$"
+
+  # Maximum issues count per one linter
+  max-issues-per-linter: 0
+  max-same-issues: 0

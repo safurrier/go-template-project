@@ -1,0 +1,46 @@
+# Go artifacts
+/bin/
+/dist/
+*.exe
+*.test
+*.prof
+*.out
+
+# Coverage files
+coverage.out
+coverage.html
+
+# Security reports
+gosec-report.sarif
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Build artifacts
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker
+.dockerignore
