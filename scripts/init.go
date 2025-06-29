@@ -179,14 +179,6 @@ go 1.22
 require (
 	// Runtime dependencies will be added as needed
 )
-
-require (
-	// Development tools (Go 1.21+ handles tool dependencies)
-	github.com/golangci/golangci-lint v1.56.0
-	mvdan.cc/gofumpt v0.6.0
-	golang.org/x/vuln/cmd/govulncheck v1.0.0
-	github.com/securecodewarrior/gosec/v2/cmd/gosec v2.18.2
-)
 `, config.ModulePath)
 
 	return os.WriteFile("go.mod", []byte(goModContent), 0o644)
