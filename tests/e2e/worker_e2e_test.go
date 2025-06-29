@@ -28,7 +28,7 @@ func TestWorkerApplicationLaunches(t *testing.T) {
 	cmd.Dir = getProjectRoot(t)
 
 	// Set test environment with debug enabled to get more output
-	cmd.Env = append(os.Environ(), "DEBUG=true")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "DEBUG=true")
 
 	// Start worker
 	if err := cmd.Start(); err != nil {
@@ -97,7 +97,7 @@ func TestWorkerTaskProcessing(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/worker")
 	cmd.Dir = getProjectRoot(t)
-	cmd.Env = append(os.Environ(), "DEBUG=true")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "DEBUG=true")
 
 	// Capture output to verify worker is processing tasks
 	stdout, err := cmd.StdoutPipe()
@@ -185,7 +185,8 @@ func TestWorkerConfiguration(t *testing.T) {
 
 			cmd := exec.CommandContext(ctx, "go", "run", "./cmd/worker")
 			cmd.Dir = getProjectRoot(t)
-			cmd.Env = append(os.Environ(), tc.env...)
+			cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+			cmd.Env = append(cmd.Env, tc.env...)
 
 			// Capture output
 			stdout, err := cmd.StdoutPipe()

@@ -29,6 +29,7 @@ func TestInitScriptBasicFunctionality(t *testing.T) {
 	// Act: Run init script with non-interactive input
 	cmd := exec.Command("go", "run", "scripts/init.go")
 	cmd.Dir = tmpDir
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 
 	// Provide automated input to the interactive script
 	// This simulates user input for project configuration
@@ -86,6 +87,7 @@ func TestInitScriptValidation(t *testing.T) {
 
 		cmd := exec.Command("go", "run", "scripts/init.go")
 		cmd.Dir = tmpDir
+		cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 
 		// Provide invalid project name (starts with number)
 		input := "123-invalid-name\n"
@@ -106,6 +108,7 @@ func TestInitScriptValidation(t *testing.T) {
 
 		cmd := exec.Command("go", "run", "scripts/init.go")
 		cmd.Dir = tmpDir
+		cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 
 		// Provide project name then invalid module path
 		input := strings.Join([]string{
@@ -137,6 +140,7 @@ func TestInitScriptFileGeneration(t *testing.T) {
 	// Run init script with minimal configuration
 	cmd := exec.Command("go", "run", "scripts/init.go")
 	cmd.Dir = tmpDir
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 
 	input := strings.Join([]string{
 		"example-project",

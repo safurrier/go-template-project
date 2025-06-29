@@ -30,7 +30,8 @@ func TestServerApplicationLaunches(t *testing.T) {
 
 	// Set test environment
 	cmd.Env = append(os.Environ(),
-		"PORT=8081", // Use different port to avoid conflicts
+		"CGO_ENABLED=0", // Disable CGO for CI compatibility
+		"PORT=8081",     // Use different port to avoid conflicts
 		"DEBUG=true",
 	)
 
@@ -75,7 +76,7 @@ func TestServerHealthEndpoint(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/server")
 	cmd.Dir = getProjectRoot(t)
-	cmd.Env = append(os.Environ(), "PORT=8082", "DEBUG=false")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "PORT=8082", "DEBUG=false")
 
 	if err := cmd.Start(); err != nil {
 		t.Skipf("Could not start server for health test: %v", err)
@@ -138,7 +139,7 @@ func TestServerGracefulShutdown(t *testing.T) {
 	// Arrange: Start server
 	cmd := exec.Command("go", "run", "./cmd/server")
 	cmd.Dir = getProjectRoot(t)
-	cmd.Env = append(os.Environ(), "PORT=8083", "DEBUG=true")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "PORT=8083", "DEBUG=true")
 
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("Failed to start server for shutdown test: %v", err)
