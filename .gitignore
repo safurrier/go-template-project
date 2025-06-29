@@ -33,6 +33,7 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+tmp/
 
 # Build artifacts
 vendor/

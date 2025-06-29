@@ -78,7 +78,12 @@ func main() {
 	fmt.Println("  1. Review the generated files")
 	fmt.Println("  2. Run 'make setup' to install development tools")
 	fmt.Println("  3. Run 'make check' to verify everything works")
-	fmt.Println("  4. Start coding!")
+	if config.EnableDocs {
+		fmt.Println("  4. Update documentation in docs/ to match your project")
+		fmt.Println("  5. Start coding!")
+	} else {
+		fmt.Println("  4. Start coding!")
+	}
 }
 
 func gatherProjectInfo() (*ProjectConfig, error) {

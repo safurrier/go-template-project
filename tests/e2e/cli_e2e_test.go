@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"os"
 	"os/exec"
 	"testing"
 	"time"
@@ -135,27 +134,6 @@ func TestCLIInvalidFlag(t *testing.T) {
 
 // Helper functions
 
-func getProjectRoot(t *testing.T) string {
-	// Navigate to project root from tests/e2e/
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get working directory: %v", err)
-	}
-
-	// If we're in tests/e2e, go up two levels
-	if dir := wd; len(dir) > 8 && dir[len(dir)-8:] == "tests/e2e" {
-		return "../.."
-	}
-
-	// If we're already in project root, use current directory
-	if _, err := os.Stat("go.mod"); err == nil {
-		return "."
-	}
-
-	t.Fatal("Could not determine project root directory")
-	return ""
-}
-
 func containsAppInfo(output string) bool {
 	// Look for version information in output
 	// This is intentionally flexible to not couple to specific strings
@@ -182,17 +160,4 @@ func containsErrorInfo(output string) bool {
 		contains(output, "invalid") ||
 		contains(output, "error") ||
 		contains(output, "flag provided but not defined"))
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && indexOf(s, substr) >= 0
-}
-
-func indexOf(s, substr string) int {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
 }
