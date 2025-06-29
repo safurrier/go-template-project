@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -56,7 +57,6 @@ func TestCLIVersionFlag(t *testing.T) {
 
 	// Act: Execute command
 	output, err := cmd.CombinedOutput()
-
 	// Assert: Should exit successfully and show version
 	if err != nil {
 		t.Fatalf("CLI --version failed: %v\nOutput: %s", err, output)
@@ -94,7 +94,7 @@ func TestCLIHelp(t *testing.T) {
 			if outputStr == "" {
 				t.Fatalf("CLI %s produced no output", flag)
 			}
-			
+
 			// Note: err may be non-nil for help flags, which is normal
 			_ = err // Help flags may exit with non-zero code
 
@@ -160,8 +160,8 @@ func containsAppInfo(output string) bool {
 	// Look for version information in output
 	// This is intentionally flexible to not couple to specific strings
 	return len(output) > 10 && (
-		// Common patterns for version output
-		contains(output, "version") ||
+	// Common patterns for version output
+	contains(output, "version") ||
 		contains(output, "go-template") ||
 		contains(output, "v1.") ||
 		contains(output, "1.0"))
@@ -169,8 +169,7 @@ func containsAppInfo(output string) bool {
 
 func containsHelpInfo(output string) bool {
 	// Look for help patterns in output
-	return len(output) > 10 && (
-		contains(output, "Usage") ||
+	return len(output) > 10 && (contains(output, "Usage") ||
 		contains(output, "usage") ||
 		contains(output, "help") ||
 		contains(output, "flag") ||
@@ -179,8 +178,7 @@ func containsHelpInfo(output string) bool {
 
 func containsErrorInfo(output string) bool {
 	// Look for error patterns in output
-	return len(output) > 5 && (
-		contains(output, "unknown") ||
+	return len(output) > 5 && (contains(output, "unknown") ||
 		contains(output, "invalid") ||
 		contains(output, "error") ||
 		contains(output, "flag provided but not defined"))

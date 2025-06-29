@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -27,9 +28,9 @@ func TestServerApplicationLaunches(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/server")
 	cmd.Dir = getProjectRoot(t)
-	
+
 	// Set test environment
-	cmd.Env = append(os.Environ(), 
+	cmd.Env = append(os.Environ(),
 		"PORT=8081", // Use different port to avoid conflicts
 		"DEBUG=true",
 	)
@@ -49,7 +50,7 @@ func TestServerApplicationLaunches(t *testing.T) {
 
 	// Act: Wait for server to start and test endpoints
 	serverURL := "http://localhost:8081"
-	
+
 	// Wait for server to be ready
 	if !waitForServer(t, serverURL+"/health", 10*time.Second) {
 		t.Fatal("Server did not start within timeout")
@@ -68,7 +69,7 @@ func TestServerHealthEndpoint(t *testing.T) {
 	// This test assumes server is running (could be started by docker-compose or manually)
 	// For CI, we'll use a different port to avoid conflicts
 	serverURL := "http://localhost:8082"
-	
+
 	// Try to start a server instance for this test
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -274,8 +275,7 @@ func testServerEndpoints(t *testing.T, baseURL string) {
 
 func containsHealthInfo(body string) bool {
 	// Look for health-related information without coupling to exact JSON structure
-	return len(body) > 5 && (
-		contains(body, "healthy") ||
+	return len(body) > 5 && (contains(body, "healthy") ||
 		contains(body, "status") ||
 		contains(body, "timestamp") ||
 		contains(body, "version"))
@@ -283,8 +283,7 @@ func containsHealthInfo(body string) bool {
 
 func containsAPIInfo(body string) bool {
 	// Look for API information patterns
-	return len(body) > 5 && (
-		contains(body, "name") ||
+	return len(body) > 5 && (contains(body, "name") ||
 		contains(body, "version") ||
 		contains(body, "go-template"))
 }

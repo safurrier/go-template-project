@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -25,7 +26,7 @@ func TestWorkerApplicationLaunches(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/worker")
 	cmd.Dir = getProjectRoot(t)
-	
+
 	// Set test environment with debug enabled to get more output
 	cmd.Env = append(os.Environ(), "DEBUG=true")
 
@@ -302,8 +303,7 @@ func captureOutput(stdout, stderr io.Reader, duration time.Duration) string {
 func containsWorkerActivity(output string) bool {
 	// Look for signs that the worker is actively processing
 	// This is flexible to avoid coupling to exact log messages
-	return len(output) > 10 && (
-		contains(output, "Worker") ||
+	return len(output) > 10 && (contains(output, "Worker") ||
 		contains(output, "worker") ||
 		contains(output, "started") ||
 		contains(output, "processing") ||
@@ -312,13 +312,12 @@ func containsWorkerActivity(output string) bool {
 		contains(output, "completed") ||
 		contains(output, "🚀") || // Emoji used in worker startup
 		contains(output, "📋") || // Emoji used in task processing
-		contains(output, "✅"))   // Emoji used in task completion
+		contains(output, "✅")) // Emoji used in task completion
 }
 
 func containsDebugInfo(output string) bool {
 	// Look for debug-level information
-	return len(output) > 5 && (
-		contains(output, "debug") ||
+	return len(output) > 5 && (contains(output, "debug") ||
 		contains(output, "DEBUG") ||
 		contains(output, "Processing task") ||
 		contains(output, "Task completed") ||

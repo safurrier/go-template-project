@@ -64,7 +64,11 @@ func ReadinessCheck() http.HandlerFunc {
 
 		if !ready {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("Not ready"))
+			_, err := w.Write([]byte("Not ready"))
+			if err != nil {
+				// Error writing response, but we've already set status
+				return
+			}
 			return
 		}
 
@@ -76,6 +80,10 @@ func ReadinessCheck() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
-		json.NewEncoder(w).Encode(response)
+		err := json.NewEncoder(w).Encode(response)
+		if err != nil {
+			// Error encoding response, but status already sent
+			return
+		}
 	}
 }

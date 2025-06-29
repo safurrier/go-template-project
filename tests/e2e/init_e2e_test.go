@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -28,22 +29,22 @@ func TestInitScriptBasicFunctionality(t *testing.T) {
 	// Act: Run init script with non-interactive input
 	cmd := exec.Command("go", "run", "scripts/init.go")
 	cmd.Dir = tmpDir
-	
+
 	// Provide automated input to the interactive script
 	// This simulates user input for project configuration
 	input := strings.Join([]string{
-		"test-project",                                    // Project name
-		"github.com/test-org/test-project",              // Module path
-		"A test project for E2E validation",             // Description
-		"Test User",                                      // Author name
-		"test@example.com",                               // Author email
-		"MIT",                                            // License
-		"y",                                              // Include CLI
-		"y",                                              // Include server
-		"n",                                              // Include worker
-		"y",                                              // Include docs
-		"",                                               // Git remote (empty)
-		"y",                                              // Confirm initialization
+		"test-project",                      // Project name
+		"github.com/test-org/test-project",  // Module path
+		"A test project for E2E validation", // Description
+		"Test User",                         // Author name
+		"test@example.com",                  // Author email
+		"MIT",                               // License
+		"y",                                 // Include CLI
+		"y",                                 // Include server
+		"n",                                 // Include worker
+		"y",                                 // Include docs
+		"",                                  // Git remote (empty)
+		"y",                                 // Confirm initialization
 	}, "\n") + "\n"
 
 	cmd.Stdin = strings.NewReader(input)
@@ -211,7 +212,7 @@ func cleanupTempDir(t *testing.T, dir string) {
 func copyTemplateFiles(t *testing.T, srcDir, dstDir string) {
 	// Copy essential template files for testing
 	// Note: This is a simplified copy for testing - real usage would clone the repo
-	
+
 	files := []string{
 		"go.mod",
 		"Makefile",
@@ -224,7 +225,7 @@ func copyTemplateFiles(t *testing.T, srcDir, dstDir string) {
 	for _, file := range files {
 		srcPath := filepath.Join(srcDir, file)
 		dstPath := filepath.Join(dstDir, file)
-		
+
 		if err := copyFile(srcPath, dstPath); err != nil {
 			t.Logf("Warning: Failed to copy %s: %v", file, err)
 		}
@@ -243,7 +244,7 @@ func copyTemplateFiles(t *testing.T, srcDir, dstDir string) {
 	for _, dir := range dirs {
 		srcPath := filepath.Join(srcDir, dir)
 		dstPath := filepath.Join(dstDir, dir)
-		
+
 		if err := copyDir(srcPath, dstPath); err != nil {
 			t.Logf("Warning: Failed to copy directory %s: %v", dir, err)
 		}
@@ -255,13 +256,13 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Create parent directory if needed
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
-	
-	return os.WriteFile(dst, data, 0644)
+
+	return os.WriteFile(dst, data, 0o644)
 }
 
 func copyDir(src, dst string) error {

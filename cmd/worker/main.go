@@ -61,10 +61,10 @@ func (w *Worker) processTask() {
 	if w.config.Debug {
 		log.Println("📋 Processing task...")
 	}
-	
+
 	// Simulate work
 	time.Sleep(100 * time.Millisecond)
-	
+
 	if w.config.Debug {
 		log.Println("✅ Task completed")
 	}

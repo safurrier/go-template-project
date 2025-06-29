@@ -38,6 +38,11 @@ const (
 	defaultLicense = "MIT"
 	defaultAuthor  = "Your Name"
 	defaultEmail   = "your.email@example.com"
+
+	// Regex patterns for validation
+	projectNamePattern = `^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$`
+	modulePathPattern  = `^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]/` +
+		`[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]/[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$`
 )
 
 func main() {
@@ -56,7 +61,7 @@ func main() {
 	fmt.Printf("  Description:  %s\n", config.Description)
 	fmt.Printf("  Author:       %s <%s>\n", config.Author, config.Email)
 	fmt.Printf("  License:      %s\n", config.License)
-	fmt.Printf("  Components:   CLI=%t Server=%t Worker=%t Docs=%t E2E=%t\n", 
+	fmt.Printf("  Components:   CLI=%t Server=%t Worker=%t Docs=%t E2E=%t\n",
 		config.EnableCLI, config.EnableServer, config.EnableWorker, config.EnableDocs, config.EnableE2ETests)
 
 	if !confirm("\nProceed with initialization?") {
@@ -101,8 +106,8 @@ func gatherProjectInfo() (*ProjectConfig, error) {
 	}
 
 	// Description
-	config.Description = promptWithDefault(reader, "Project description", 
-		fmt.Sprintf("A Go application built from go-template-project"))
+	config.Description = promptWithDefault(reader, "Project description",
+		"A Go application built from go-template-project")
 
 	// Try to get git config for defaults
 	gitAuthor := getGitConfig("user.name", defaultAuthor)
@@ -179,7 +184,7 @@ require (
 )
 `, config.ModulePath)
 
-	return os.WriteFile("go.mod", []byte(goModContent), 0644)
+	return os.WriteFile("go.mod", []byte(goModContent), 0o644)
 }
 
 func updateImportPaths(config *ProjectConfig) error {
@@ -261,7 +266,8 @@ func generateReadme(config *ProjectConfig) error {
 
 > {{.Description}}
 
-Built from the [go-template-project](https://github.com/your-org/go-template-project) starter template - providing quality gates, container deployment, and CI/CD without setup time.
+Built from the [go-template-project](https://github.com/your-org/go-template-project) 
+starter template - providing quality gates, container deployment, and CI/CD without setup time.
 
 ## Quick Start
 
@@ -357,7 +363,8 @@ Configure via environment variables:
 
 ---
 
-*Generated from [go-template-project](https://github.com/your-org/go-template-project) - A batteries-included Go starter template.*
+*Generated from [go-template-project](https://github.com/your-org/go-template-project) - 
+A batteries-included Go starter template.*
 `
 
 	tmpl, err := template.New("readme").Parse(readmeTemplate)
@@ -373,7 +380,7 @@ Configure via environment variables:
 
 	data := TemplateData{
 		ProjectConfig: *config,
-		Year:         "2024",
+		Year:          "2024",
 	}
 
 	return tmpl.Execute(file, data)
@@ -419,13 +426,19 @@ func setupPreCommitHooks() error {
 
 func prompt(reader *bufio.Reader, question string) string {
 	fmt.Printf("%s: ", question)
-	answer, _ := reader.ReadString('\n')
+	answer, err := reader.ReadString('\n')
+	if err != nil {
+		return ""
+	}
 	return strings.TrimSpace(answer)
 }
 
 func promptWithDefault(reader *bufio.Reader, question, defaultValue string) string {
 	fmt.Printf("%s [%s]: ", question, defaultValue)
-	answer, _ := reader.ReadString('\n')
+	answer, err := reader.ReadString('\n')
+	if err != nil {
+		return defaultValue
+	}
 	answer = strings.TrimSpace(answer)
 	if answer == "" {
 		return defaultValue
@@ -440,7 +453,10 @@ func promptBool(reader *bufio.Reader, question string, defaultValue bool) bool {
 	}
 
 	fmt.Printf("%s [%s]: ", question, defaultStr)
-	answer, _ := reader.ReadString('\n')
+	answer, err := reader.ReadString('\n')
+	if err != nil {
+		return defaultValue
+	}
 	answer = strings.TrimSpace(strings.ToLower(answer))
 
 	if answer == "" {
@@ -455,12 +471,18 @@ func confirm(question string) bool {
 }
 
 func isValidProjectName(name string) bool {
-	matched, _ := regexp.MatchString(`^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$`, name)
+	matched, err := regexp.MatchString(projectNamePattern, name)
+	if err != nil {
+		return false
+	}
 	return matched && len(name) > 0
 }
 
 func isValidModulePath(path string) bool {
-	matched, _ := regexp.MatchString(`^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]/[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]/[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$`, path)
+	matched, err := regexp.MatchString(modulePathPattern, path)
+	if err != nil {
+		return false
+	}
 	return matched
 }
 

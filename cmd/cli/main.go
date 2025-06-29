@@ -14,7 +14,7 @@ const (
 )
 
 func main() {
-	var showVersion = flag.Bool("version", false, "Show version information")
+	showVersion := flag.Bool("version", false, "Show version information")
 	flag.Parse()
 
 	if *showVersion {
