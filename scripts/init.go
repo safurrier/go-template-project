@@ -176,7 +176,7 @@ func initializeProject(config *ProjectConfig) error {
 func updateGoMod(config *ProjectConfig) error {
 	goModContent := fmt.Sprintf(`module %s
 
-go 1.22
+go 1.23
 
 require (
 	// Runtime dependencies will be added as needed
