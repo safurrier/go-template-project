@@ -44,6 +44,7 @@ func TestInitScriptBasicFunctionality(t *testing.T) {
 		"y",                                 // Include server
 		"n",                                 // Include worker
 		"y",                                 // Include docs
+		"n",                                 // Include E2E tests
 		"",                                  // Git remote (empty)
 		"y",                                 // Confirm initialization
 	}, "\n") + "\n"
@@ -153,6 +154,7 @@ func TestInitScriptFileGeneration(t *testing.T) {
 		"n", // Server (disabled to test removal)
 		"n", // Worker (disabled to test removal)
 		"y", // Docs
+		"n", // E2E tests (disabled to test removal)
 		"",  // No git remote
 		"y", // Confirm
 	}, "\n") + "\n"

@@ -55,19 +55,6 @@ func main() {
 		log.Fatalf("Failed to gather project info: %v", err)
 	}
 
-	fmt.Println("\n📋 Configuration Summary:")
-	fmt.Printf("  Project Name: %s\n", config.ProjectName)
-	fmt.Printf("  Module Path:  %s\n", config.ModulePath)
-	fmt.Printf("  Description:  %s\n", config.Description)
-	fmt.Printf("  Author:       %s <%s>\n", config.Author, config.Email)
-	fmt.Printf("  License:      %s\n", config.License)
-	fmt.Printf("  Components:   CLI=%t Server=%t Worker=%t Docs=%t E2E=%t\n",
-		config.EnableCLI, config.EnableServer, config.EnableWorker, config.EnableDocs, config.EnableE2ETests)
-
-	if !confirm("\nProceed with initialization?") {
-		fmt.Println("❌ Initialization cancelled")
-		os.Exit(0)
-	}
 
 	if err := initializeProject(config); err != nil {
 		log.Fatalf("Failed to initialize project: %v", err)
@@ -132,6 +119,21 @@ func gatherProjectInfo() (*ProjectConfig, error) {
 
 	// Git remote (optional)
 	config.GitRemote = prompt(reader, "Git remote URL (optional)")
+
+	// Confirmation
+	fmt.Println("\n📋 Configuration Summary:")
+	fmt.Printf("  Project Name: %s\n", config.ProjectName)
+	fmt.Printf("  Module Path:  %s\n", config.ModulePath)
+	fmt.Printf("  Description:  %s\n", config.Description)
+	fmt.Printf("  Author:       %s <%s>\n", config.Author, config.Email)
+	fmt.Printf("  License:      %s\n", config.License)
+	fmt.Printf("  Components:   CLI=%t Server=%t Worker=%t Docs=%t E2E=%t\n",
+		config.EnableCLI, config.EnableServer, config.EnableWorker, config.EnableDocs, config.EnableE2ETests)
+
+	if !promptBool(reader, "\nProceed with initialization?", false) {
+		fmt.Println("❌ Initialization cancelled")
+		os.Exit(0)
+	}
 
 	return config, nil
 }
