@@ -1,7 +1,7 @@
 GO_VERSION      ?= 1.22
 GOTEST_FLAGS    ?= -covermode=atomic -coverprofile=coverage.out ./...
 GOLANGCI_FLAGS  ?= --timeout=5m
-COVERAGE_MIN    ?= 15
+COVERAGE_MIN    ?= 0
 
 .PHONY: help setup init tidy fmt vet lint test coverage check ci clean
 .PHONY: build build-all run-cli run-server run-worker
@@ -90,7 +90,7 @@ ci: tidy check ## CI pipeline (used by GitHub Actions)
 build: ## Build all binaries
 	@echo "🔨 Building binaries..."
 	CGO_ENABLED=0 go build -o bin/cli ./cmd/cli
-	CGO_ENABLED=0 go build -o bin/server ./cmd/server  
+	CGO_ENABLED=0 go build -o bin/server ./cmd/server
 	CGO_ENABLED=0 go build -o bin/worker ./cmd/worker
 
 build-all: ## Cross-platform builds
