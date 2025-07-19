@@ -439,7 +439,10 @@ func initializeGit(config *ProjectConfig) error {
 		return err
 	case <-time.After(10 * time.Second):
 		if commitCmd.Process != nil {
-			commitCmd.Process.Kill()
+			if err := commitCmd.Process.Kill(); err != nil {
+				// Log kill error but don't fail the timeout handling
+				fmt.Printf("Warning: failed to kill git commit process: %v\n", err)
+			}
 		}
 		return fmt.Errorf("git commit timed out after 10 seconds")
 	}
@@ -496,11 +499,6 @@ func promptBool(reader *bufio.Reader, question string, defaultValue bool) bool {
 		return defaultValue
 	}
 	return answer == "y" || answer == "yes"
-}
-
-func confirm(question string) bool {
-	reader := bufio.NewReader(os.Stdin)
-	return promptBool(reader, question, false)
 }
 
 func isValidProjectName(name string) bool {
