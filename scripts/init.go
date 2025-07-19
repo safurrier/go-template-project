@@ -56,7 +56,6 @@ func main() {
 		log.Fatalf("Failed to gather project info: %v", err)
 	}
 
-
 	if err := initializeProject(config); err != nil {
 		log.Fatalf("Failed to initialize project: %v", err)
 	}
@@ -402,7 +401,7 @@ func initializeGit(config *ProjectConfig) error {
 	if err := exec.Command("git", "config", "user.name", config.Author).Run(); err != nil {
 		fmt.Printf("⚠️  Failed to set git user.name: %v\n", err)
 	}
-	
+
 	if err := exec.Command("git", "config", "user.email", config.Email).Run(); err != nil {
 		fmt.Printf("⚠️  Failed to set git user.email: %v\n", err)
 	}
@@ -423,7 +422,7 @@ func initializeGit(config *ProjectConfig) error {
 	// Use properly formatted commit message that passes pre-commit hooks
 	commitMsg := fmt.Sprintf("feat: initialize %s project\n\nGenerated from go-template-project", config.ProjectName)
 	commitCmd := exec.Command("git", "commit", "-m", commitMsg)
-	
+
 	// Set a timeout for the git commit to prevent hanging
 	done := make(chan error, 1)
 	go func() {
