@@ -14,7 +14,7 @@ Welcome to the Go Template Project - a comprehensive, batteries-included starter
 # Clone and initialize your project
 git clone https://github.com/your-org/go-template-project.git my-project
 cd my-project
-make init
+go run scripts/init.go
 
 # Start developing
 make setup
@@ -46,7 +46,7 @@ The template includes three example applications demonstrating different pattern
 
 1. **Initialize Your Project**
    ```bash
-   make init
+   go run scripts/init.go
    ```
    Interactive setup will customize the template for your project.
 
@@ -102,7 +102,7 @@ Unit Tests (Individual component behavior)
 
 ## 📊 Quality Metrics
 
-- **Code Coverage**: Minimum 80% with `make coverage`
+- **Code Coverage**: Configurable threshold with `make coverage`
 - **Linting**: golangci-lint with comprehensive rule set
 - **Security**: govulncheck and gosec scanning
 - **Dependencies**: Automated vulnerability checking
@@ -120,4 +120,4 @@ This template is available under the MIT License. See [LICENSE](LICENSE) for det
 
 ---
 
-**Ready to build something amazing?** Start with `make init` and let the template guide you!
+**Ready to build something amazing?** Start with `go run scripts/init.go` and let the template guide you!

@@ -237,6 +237,5 @@ cat ~/.git/hooks/pre-commit
 ## Getting Help
 
 - Check the main [README.md](../README.md) for overview
-- Review [E2E_TESTING.md](./E2E_TESTING.md) for testing guidance
-- See [ARCHITECTURE.md](./ARCHITECTURE.md) for design patterns
+- See [ARCHITECTURE.md](./ARCHITECTURE.md) for design patterns and testing guidance
 - File issues on GitHub for bugs or feature requests

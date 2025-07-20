@@ -13,14 +13,14 @@ This guide will help you set up and customize the Go Template Project for your n
 
 Ensure you have the following installed:
 
-- **Go 1.22+** - [Install from golang.org](https://golang.org/downloads/)
+- **Go 1.23+** - [Install from golang.org](https://golang.org/downloads/)
 - **Git** - For version control
 - **Make** - For build automation
 - **Docker** (optional) - For containerized development
 
 ```bash
 # Verify installations
-go version    # Should show Go 1.22+
+go version    # Should show Go 1.23+
 git --version
 make --version
 docker --version
@@ -40,7 +40,7 @@ cd my-awesome-project
 The interactive initialization script will customize the template:
 
 ```bash
-make init
+go run scripts/init.go
 ```
 
 This will prompt you for:
@@ -60,7 +60,7 @@ make setup
 
 This installs essential Go development tools:
 - `golangci-lint` - Comprehensive linting
-- `gofumpt` - Stricter formatting than gofmt  
+- `gofumpt` - Stricter formatting than gofmt
 - `govulncheck` - Vulnerability scanning
 - `gosec` - Security analysis
 
@@ -88,7 +88,7 @@ After initialization, your project will have this structure:
 my-awesome-project/
 ├── cmd/                    # Application entry points
 │   ├── cli/               # Command-line application
-│   ├── server/            # HTTP server application  
+│   ├── server/            # HTTP server application
 │   └── worker/            # Background worker application
 ├── internal/              # Private application code
 │   ├── cli/              # CLI-specific logic
@@ -159,7 +159,7 @@ make build
 
 # Run specific applications
 make run-cli
-make run-server  
+make run-server
 make run-worker
 
 # Cross-platform builds
@@ -189,7 +189,7 @@ The template implements a progressive testing approach:
 # Unit tests (fast, isolated)
 make test-unit
 
-# Integration tests (component interactions)  
+# Integration tests (component interactions)
 make test-integration
 
 # Smoke tests (critical path validation)
@@ -204,7 +204,7 @@ make test-all
 
 ### Coverage Requirements
 
-- **Minimum coverage**: 80% (configurable in Makefile)
+- **Minimum coverage**: Configurable in Makefile (template defaults to 0%)
 - **Coverage report**: Generated in `coverage.out`
 - **HTML report**: `go tool cover -html=coverage.out`
 
@@ -221,9 +221,9 @@ make test-all
 
 3. Update Makefile with build targets:
    ```makefile
-   build: 
+   build:
        CGO_ENABLED=0 go build -o bin/myapp ./cmd/myapp
-   
+
    run-myapp:
        go run ./cmd/myapp
    ```
