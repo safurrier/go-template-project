@@ -10,7 +10,7 @@ The E2E tests validate complete user journeys through the entire application sta
 
 Following the progressive testing approach:
 1. **E2E Tests** (Start here) - Complete user workflows
-2. **Smoke Tests** - Critical path validation  
+2. **Smoke Tests** - Critical path validation
 3. **Integration Tests** - Component interactions
 4. **Unit Tests** - Individual function testing
 
@@ -210,6 +210,9 @@ Tests respect environment configuration:
 - `DEBUG=true`: Enables verbose output for debugging
 - `PORT=8081`: Uses non-default ports to avoid conflicts
 - `SHORT=true`: Skips long-running tests via `testing.Short()`
+- `TMPDIR=$HOME/tmp`: Uses custom temp directory for NAS/restricted filesystems
+- `CGO_ENABLED=0`: Disables CGO for cross-platform compatibility
+- `WORKER_TASK_INTERVAL=2s`: Faster worker task intervals for testing
 
 ## Removing E2E Tests
 
@@ -266,6 +269,9 @@ Optimize for quick feedback:
 2. **Timeouts**: Increase timeout values for slower systems
 3. **Process Cleanup**: Tests kill processes in defer blocks
 4. **CI Flakiness**: Tests include retry logic and realistic timeouts
+5. **Execution Permissions**: Use custom TMPDIR on NAS/restricted filesystems
+6. **Signal Handling**: Tests use SIGTERM for reliable process termination
+7. **Worker Timing**: Configurable task intervals for faster test execution
 
 ### Debugging Failed Tests
 
@@ -273,16 +279,22 @@ Optimize for quick feedback:
 # Run specific test with verbose output
 go test -tags=e2e ./tests/e2e/server_e2e_test.go -v -run TestServerHealthEndpoint
 
+# For NAS/restricted filesystems - use custom TMPDIR
+mkdir -p ~/tmp
+TMPDIR=$HOME/tmp go test -tags=e2e ./tests/e2e/init_e2e_test.go -v
+
 # Check if applications build correctly
 make build
 
 # Test applications manually
 make run-cli
 make run-server
-make run-worker
 
-# Run E2E test verification script
-./scripts/test_e2e.sh
+# Test worker with debug output and fast interval
+DEBUG=true WORKER_TASK_INTERVAL=2s make run-worker
+
+# Run E2E tests with environment variables
+CGO_ENABLED=0 TMPDIR=$HOME/tmp make test-e2e
 ```
 
 ### Expected Test Behavior

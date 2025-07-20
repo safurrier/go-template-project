@@ -121,6 +121,23 @@ Following the user's established testing conventions:
 3. **Integration Tests**: Test component interactions
 4. **Unit Tests**: Test individual functions and methods
 
+### E2E Testing Architecture
+
+The template includes comprehensive E2E testing for real-world validation:
+
+#### Test Categories
+- **CLI Tests**: Application launch, version flags, help system, error handling
+- **Server Tests**: HTTP server lifecycle, health endpoints, graceful shutdown
+- **Worker Tests**: Background processing, task intervals, signal handling
+- **Init Tests**: Interactive setup, project customization, git integration
+
+#### Key Testing Principles
+- **Real processes**: Execute actual binaries, not mocks
+- **Signal handling**: Use `SIGTERM` for reliable process termination
+- **Configurable timing**: Environment variables for test intervals (`WORKER_TASK_INTERVAL`)
+- **Environment isolation**: Custom `TMPDIR` for NAS/restricted filesystems
+- **Timeout protection**: Prevent hanging tests with disciplined cleanup
+
 ### Test Organization
 
 ```
@@ -149,12 +166,12 @@ Three optimized images from one Dockerfile:
 
 ```dockerfile
 # Build stage
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # CLI Runtime
 FROM gcr.io/distroless/static-debian12:nonroot AS cli
 
-# Server Runtime  
+# Server Runtime
 FROM gcr.io/distroless/static-debian12:nonroot AS server
 
 # Worker Runtime
@@ -179,18 +196,31 @@ Every commit must pass:
 3. **Linting**: `golangci-lint` with comprehensive rules
 4. **Testing**: Unit tests with race detection
 5. **Security**: `govulncheck` and `gosec` scanning
-6. **Coverage**: 80% minimum threshold
+6. **Coverage**: Configurable threshold (template defaults to 0% for flexibility)
 
 ### Pre-commit Hooks
 
 Local quality enforcement mirrors CI pipeline:
 
 ```yaml
-- id: go-fmt-gofumpt
-- id: go-vet  
-- id: go-test
-- id: golangci-lint
-- id: go-sec
+repos:
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: Format Go code
+        entry: make
+        language: system
+        args: [fmt]
+        types: [go]
+        pass_filenames: false
+
+      - id: golangci-lint
+        name: golangci-lint
+        entry: make
+        language: system
+        args: [lint]
+        types: [go]
+        pass_filenames: false
 ```
 
 ### CI/CD Pipeline
@@ -302,6 +332,35 @@ Key differences when migrating from Python collaboration template:
 2. **Test failures**: Check for race conditions with `-race`
 3. **Container size**: Verify multi-stage build stages
 4. **CI performance**: Review caching strategies
+
+### E2E Test Issues
+
+Based on debugging experience, common E2E test problems and solutions:
+
+#### Test Hanging or Resource Exhaustion
+- **Symptom**: Tests hang indefinitely, high CPU/memory usage
+- **Cause**: Git operations with incompatible commit messages, recursive pre-commit hooks
+- **Solution**: Use conventional commit format, verify pre-commit hook calls tool not itself
+
+#### Process Termination Issues
+- **Symptom**: E2E tests fail to terminate server/worker processes
+- **Cause**: Using `os.Interrupt` instead of `syscall.SIGTERM`
+- **Solution**: Switch to `SIGTERM` with proper exit code handling (143/130)
+
+#### Execution Permission Errors
+- **Symptom**: Tests fail on NAS or restricted filesystems
+- **Cause**: Default temp directory lacks execution permissions
+- **Solution**: Use custom `TMPDIR` environment variable
+
+#### Worker Test Timing
+- **Symptom**: Worker tests fail due to timing mismatches
+- **Cause**: Default 10-second task interval too slow for tests
+- **Solution**: Use `WORKER_TASK_INTERVAL=2s` environment variable
+
+#### Pre-commit Hook Recursion
+- **Symptom**: Infinite loop during commit operations
+- **Cause**: Global hook calls itself instead of pre-commit tool
+- **Solution**: Verify hook calls `pre-commit run --hook-stage pre-commit`
 
 ### Debug Tools
 

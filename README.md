@@ -10,7 +10,7 @@ Transform your team's Go development from "blank `go mod init` and vibes" to "cl
 git clone https://github.com/your-org/go-template-project.git my-new-project
 cd my-new-project
 go run scripts/init.go    # Interactive project setup
-make setup               # Install development tools  
+make setup               # Install development tools
 make check               # Verify everything works
 go run ./cmd/cli         # Test the CLI
 ```
@@ -21,8 +21,8 @@ go run ./cmd/cli         # Test the CLI
 - One-command project initialization
 - Quality gates that match your CI pipeline
 - Pre-commit hooks prevent broken commits
-- 80% test coverage enforcement
-- Security scanning built in
+- Comprehensive testing with E2E validation
+- Docker builds with Go 1.23 support
 
 **Production-ready container deployment:**
 - Multi-stage Dockerfile → ~10MB distroless images
@@ -65,7 +65,7 @@ License [MIT]: MIT
 
 Components to include:
 Include CLI application [Y/n]: y
-Include HTTP server [Y/n]: y  
+Include HTTP server [Y/n]: y
 Include background worker [y/N]: n
 Include documentation setup [Y/n]: y
 
@@ -77,7 +77,7 @@ Include documentation setup [Y/n]: y
 ### Development Workflow
 ```bash
 make setup          # Install development tools
-make check          # Complete quality gate (fmt + vet + lint + test + security + coverage)  
+make check          # Complete quality gate (fmt + vet + lint + test)
 make ci             # Full CI pipeline locally
 
 # Individual quality checks
@@ -85,8 +85,7 @@ make fmt            # Format code with gofumpt
 make vet            # Static analysis with go vet
 make lint           # Comprehensive linting with golangci-lint
 make test           # Tests with race detection and coverage
-make security       # Vulnerability and security scanning
-make coverage       # Enforce 80% coverage minimum
+make coverage       # Generate test coverage reports
 ```
 
 ### Testing Categories
@@ -154,10 +153,10 @@ my-project/
 
 Matches your Python template's quality-first approach:
 
-- **80% test coverage minimum** (configurable)
+- **Comprehensive testing** with unit, integration, and E2E tests
 - **Zero tolerance for linting errors**
 - **Pre-commit hooks mirror CI pipeline**
-- **Security scanning on every commit**
+- **Consistent formatting with gofumpt**
 - **No commits bypass quality gates**
 
 ## Container Architecture
@@ -168,7 +167,7 @@ Multi-stage Dockerfile produces three optimized images:
 # CLI image (~10MB)
 FROM gcr.io/distroless/static-debian12:nonroot AS cli
 
-# Server image (~10MB)  
+# Server image (~10MB)
 FROM gcr.io/distroless/static-debian12:nonroot AS server
 
 # Worker image (~10MB)
@@ -186,11 +185,11 @@ Benefits:
 Three-workflow approach for comprehensive automation:
 
 ### 1. CI Workflow (`.github/workflows/ci.yml`)
-- **Matrix testing**: Go 1.22 and 1.23
-- **Quality gates**: Format, vet, lint, test, security, coverage
+- **Go 1.23 support**: Latest Go version with enhanced tooling
+- **Quality gates**: Format, vet, lint, test, coverage
 - **Build verification**: All binaries compile successfully
 - **Container testing**: Images build and run correctly
-- **Integration testing**: End-to-end validation
+- **Integration testing**: End-to-end validation including init script
 
 ### 2. Security Workflow (`.github/workflows/security.yml`)
 - **Vulnerability scanning**: Official `govulncheck` tool
@@ -254,6 +253,7 @@ All applications support configuration via environment variables:
 | `DATABASE_URL` | | Database connection string |
 | `READ_TIMEOUT` | `15s` | HTTP read timeout |
 | `WRITE_TIMEOUT` | `15s` | HTTP write timeout |
+| `WORKER_TASK_INTERVAL` | `10s` | Worker task processing interval |
 
 ## Comparison to Python Template
 
@@ -273,7 +273,7 @@ Moving from your Python collaboration template? Here's the mapping:
 
 1. **Project structure**: Similar philosophy, Go-specific layout
 2. **Quality gates**: Same rigor, Go-native tools
-3. **Pre-commit hooks**: Same enforcement, Go-focused checks  
+3. **Pre-commit hooks**: Same enforcement, Go-focused checks
 4. **CI/CD pipeline**: Equivalent GitHub Actions workflows
 5. **Container strategy**: Multi-stage builds, much smaller images
 6. **Documentation**: Same natural writing style, Go examples
@@ -287,7 +287,7 @@ Moving from your Python collaboration template? Here's the mapping:
 - **GoReleaser integration**: Automated cross-platform releases with GitHub releases
 - **Go Report Card**: External code quality validation and badge
 
-### Phase 2: Modern Go Practices  
+### Phase 2: Modern Go Practices
 - **Structured logging**: Migrate from `log` to `log/slog` for better observability
 - **CLI distribution tool**: Create `gt new` command for easier project generation (similar to `create-react-app`)
 - **Production-ready defaults**: Enhanced signal handling and graceful shutdown patterns
@@ -297,6 +297,48 @@ Moving from your Python collaboration template? Here's the mapping:
 - **Template variants**: Industry-specific templates (microservice, API gateway, worker queue)
 - **IDE integration**: VS Code extension for template management
 - **Plugin system**: Extensible component architecture
+
+## Troubleshooting
+
+### Pre-commit Hooks
+If pre-commit hooks fail or seem to hang:
+```bash
+# Check pre-commit installation
+pre-commit --version
+
+# Reinstall hooks
+pre-commit uninstall
+pre-commit install
+
+# Test hooks manually
+pre-commit run --all-files
+```
+
+### E2E Tests
+If E2E tests hang or fail:
+```bash
+# Run with custom temp directory (for NAS/restricted environments)
+mkdir -p ~/tmp
+TMPDIR=$HOME/tmp make test-e2e
+
+# Run specific test
+TMPDIR=$HOME/tmp go test -tags=e2e -run TestInitScript ./tests/e2e/
+```
+
+### Docker Build Issues
+If Docker builds fail with Go version errors:
+```bash
+# Verify Go version in Dockerfile matches go.mod
+grep "go 1" go.mod
+grep "golang:" Dockerfile
+```
+
+### Worker Configuration
+The worker supports configurable task intervals for testing:
+```bash
+# Fast testing interval
+WORKER_TASK_INTERVAL=2s DEBUG=true go run ./cmd/worker
+```
 
 ## Contributing
 
@@ -317,7 +359,7 @@ MIT - see LICENSE file for details.
 Your Python collaboration template succeeds because it eliminates decision fatigue and provides immediate productivity. This Go template brings the same "clone, rename, ship" experience to Go development while leveraging Go's unique strengths:
 
 - **Static compilation**: No runtime dependencies
-- **Fast builds**: Sub-15-second CI pipelines  
+- **Fast builds**: Sub-15-second CI pipelines
 - **Tiny containers**: 10MB vs 100MB+ Python images
 - **Memory efficiency**: 5-20MB vs 50-100MB+ Python
 - **Performance**: Microsecond startup times
