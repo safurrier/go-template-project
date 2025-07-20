@@ -45,3 +45,8 @@ vendor/
 
 # Docker
 .dockerignore
+
+# Documentation artifacts
+docs/public/
+docs/resources/
+docs/content/api/
