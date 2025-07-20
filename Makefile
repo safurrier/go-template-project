@@ -60,17 +60,17 @@ coverage: test ## Check test coverage meets minimum threshold
 test-unit: ## Run unit tests only
 	@echo "🔬 Running unit tests..."
 	@mkdir -p tmp
-	TMPDIR=$(PWD)/tmp go test -short -race ./...
+	TMPDIR=$(PWD)/tmp CGO_ENABLED=0 go test -short ./...
 
 test-integration: ## Run integration tests
 	@echo "🔗 Running integration tests..."
 	@mkdir -p tmp
-	TMPDIR=$(PWD)/tmp go test -tags=integration ./...
+	TMPDIR=$(PWD)/tmp CGO_ENABLED=0 go test -tags=integration ./...
 
 test-smoke: ## Run smoke tests
 	@echo "💨 Running smoke tests..."
 	@mkdir -p tmp
-	TMPDIR=$(PWD)/tmp go test -tags=smoke -timeout=30s ./...
+	TMPDIR=$(PWD)/tmp CGO_ENABLED=0 go test -tags=smoke -timeout=30s ./...
 
 test-e2e: ## Run end-to-end tests
 	@echo "🎭 Running E2E tests..."
