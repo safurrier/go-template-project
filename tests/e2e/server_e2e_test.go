@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -155,9 +156,9 @@ func TestServerGracefulShutdown(t *testing.T) {
 		t.Fatal("Server did not start for shutdown test")
 	}
 
-	// Act: Send interrupt signal (graceful shutdown)
-	if err := cmd.Process.Signal(os.Interrupt); err != nil {
-		t.Fatalf("Failed to send interrupt signal: %v", err)
+	// Act: Send SIGTERM signal (graceful shutdown)
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatalf("Failed to send SIGTERM signal: %v", err)
 	}
 
 	// Assert: Server should shut down gracefully within reasonable time
@@ -172,7 +173,8 @@ func TestServerGracefulShutdown(t *testing.T) {
 		if err != nil {
 			// Check if it's a signal termination (expected)
 			if exitError, ok := err.(*exec.ExitError); ok {
-				if exitError.ExitCode() == 130 { // SIGINT exit code
+				// SIGTERM exit code is typically 143, SIGINT is 130
+				if exitError.ExitCode() == 143 || exitError.ExitCode() == 130 {
 					// This is expected for graceful shutdown
 					return
 				}

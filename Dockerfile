@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
@@ -40,7 +40,7 @@ FROM gcr.io/distroless/static-debian12:nonroot AS cli
 COPY --from=builder /out/cli /usr/local/bin/cli
 ENTRYPOINT ["cli"]
 
-# ================================  
+# ================================
 # Server Runtime Image
 # ================================
 FROM gcr.io/distroless/static-debian12:nonroot AS server
@@ -55,7 +55,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENTRYPOINT ["server"]
 
 # ================================
-# Worker Runtime Image  
+# Worker Runtime Image
 # ================================
 FROM gcr.io/distroless/static-debian12:nonroot AS worker
 

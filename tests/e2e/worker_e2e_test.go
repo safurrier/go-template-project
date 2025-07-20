@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -51,9 +52,9 @@ func TestWorkerApplicationLaunches(t *testing.T) {
 		t.Fatal("Worker exited unexpectedly")
 	}
 
-	// Send interrupt signal for graceful shutdown
-	if err := cmd.Process.Signal(os.Interrupt); err != nil {
-		t.Fatalf("Failed to send interrupt signal to worker: %v", err)
+	// Send SIGTERM signal for graceful shutdown
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatalf("Failed to send SIGTERM signal to worker: %v", err)
 	}
 
 	// Wait for graceful shutdown
@@ -68,7 +69,8 @@ func TestWorkerApplicationLaunches(t *testing.T) {
 		if err != nil {
 			// Check if it's a signal termination (expected)
 			if exitError, ok := err.(*exec.ExitError); ok {
-				if exitError.ExitCode() == 130 { // SIGINT exit code
+				// SIGTERM exit code is typically 143, SIGINT is 130
+				if exitError.ExitCode() == 143 || exitError.ExitCode() == 130 {
 					// This is expected for graceful shutdown
 					return
 				}
