@@ -1,0 +1,14 @@
+{{ define "main" }}
+<h1>{{ .Title }}</h1>
+{{ .Content }}
+
+<h2>Documentation Sections</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+    {{ range .Site.Sections }}
+    <div style="border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+        <h3><a href="{{ .RelPermalink }}" style="text-decoration: none; color: #007acc;">{{ .Title }}</a></h3>
+        <p>{{ .Params.description | default .Summary }}</p>
+    </div>
+    {{ end }}
+</div>
+{{ end }}

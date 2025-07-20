@@ -31,7 +31,7 @@ func (a *App) Run() error {
 
 	fmt.Printf("🚀 Hello from %s!\n", a.Name)
 	fmt.Printf("   Version: %s\n", a.Version)
-	
+
 	if a.Debug {
 		fmt.Println("   Debug mode: enabled")
 	}

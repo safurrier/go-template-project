@@ -1,15 +1,16 @@
+//go:build e2e
 // +build e2e
 
 package e2e
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -27,10 +28,11 @@ func TestServerApplicationLaunches(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/server")
 	cmd.Dir = getProjectRoot(t)
-	
+
 	// Set test environment
-	cmd.Env = append(os.Environ(), 
-		"PORT=8081", // Use different port to avoid conflicts
+	cmd.Env = append(os.Environ(),
+		"CGO_ENABLED=0", // Disable CGO for CI compatibility
+		"PORT=8081",     // Use different port to avoid conflicts
 		"DEBUG=true",
 	)
 
@@ -49,7 +51,7 @@ func TestServerApplicationLaunches(t *testing.T) {
 
 	// Act: Wait for server to start and test endpoints
 	serverURL := "http://localhost:8081"
-	
+
 	// Wait for server to be ready
 	if !waitForServer(t, serverURL+"/health", 10*time.Second) {
 		t.Fatal("Server did not start within timeout")
@@ -68,14 +70,14 @@ func TestServerHealthEndpoint(t *testing.T) {
 	// This test assumes server is running (could be started by docker-compose or manually)
 	// For CI, we'll use a different port to avoid conflicts
 	serverURL := "http://localhost:8082"
-	
+
 	// Try to start a server instance for this test
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/server")
 	cmd.Dir = getProjectRoot(t)
-	cmd.Env = append(os.Environ(), "PORT=8082", "DEBUG=false")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "PORT=8082", "DEBUG=false")
 
 	if err := cmd.Start(); err != nil {
 		t.Skipf("Could not start server for health test: %v", err)
@@ -138,7 +140,7 @@ func TestServerGracefulShutdown(t *testing.T) {
 	// Arrange: Start server
 	cmd := exec.Command("go", "run", "./cmd/server")
 	cmd.Dir = getProjectRoot(t)
-	cmd.Env = append(os.Environ(), "PORT=8083", "DEBUG=true")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "PORT=8083", "DEBUG=true")
 
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("Failed to start server for shutdown test: %v", err)
@@ -154,9 +156,9 @@ func TestServerGracefulShutdown(t *testing.T) {
 		t.Fatal("Server did not start for shutdown test")
 	}
 
-	// Act: Send interrupt signal (graceful shutdown)
-	if err := cmd.Process.Signal(os.Interrupt); err != nil {
-		t.Fatalf("Failed to send interrupt signal: %v", err)
+	// Act: Send SIGTERM signal (graceful shutdown)
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatalf("Failed to send SIGTERM signal: %v", err)
 	}
 
 	// Assert: Server should shut down gracefully within reasonable time
@@ -171,7 +173,8 @@ func TestServerGracefulShutdown(t *testing.T) {
 		if err != nil {
 			// Check if it's a signal termination (expected)
 			if exitError, ok := err.(*exec.ExitError); ok {
-				if exitError.ExitCode() == 130 { // SIGINT exit code
+				// SIGTERM exit code is typically 143, SIGINT is 130
+				if exitError.ExitCode() == 143 || exitError.ExitCode() == 130 {
 					// This is expected for graceful shutdown
 					return
 				}
@@ -274,8 +277,7 @@ func testServerEndpoints(t *testing.T, baseURL string) {
 
 func containsHealthInfo(body string) bool {
 	// Look for health-related information without coupling to exact JSON structure
-	return len(body) > 5 && (
-		contains(body, "healthy") ||
+	return len(body) > 5 && (contains(body, "healthy") ||
 		contains(body, "status") ||
 		contains(body, "timestamp") ||
 		contains(body, "version"))
@@ -283,8 +285,7 @@ func containsHealthInfo(body string) bool {
 
 func containsAPIInfo(body string) bool {
 	// Look for API information patterns
-	return len(body) > 5 && (
-		contains(body, "name") ||
+	return len(body) > 5 && (contains(body, "name") ||
 		contains(body, "version") ||
 		contains(body, "go-template"))
 }

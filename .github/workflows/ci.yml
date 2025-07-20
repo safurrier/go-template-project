@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ['1.22', '1.23']
+        go-version: ['1.23']
 
     steps:
     - name: Checkout code
@@ -121,6 +121,7 @@ jobs:
         tags: go-template-project:cli-${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        load: true
 
     - name: Build server image
       uses: docker/build-push-action@v5
@@ -130,6 +131,7 @@ jobs:
         tags: go-template-project:server-${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        load: true
 
     - name: Test server image
       run: |

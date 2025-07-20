@@ -1,52 +1,6 @@
-baseURL: 'https://your-org.github.io/go-template-project'
+baseURL: 'https://safurrier.github.io/go-template-project'
 languageCode: 'en-us'
 title: 'Go Template Project'
-theme: 'docsy'
-
-# Hugo configuration for documentation site
-# Uses Docsy theme which provides excellent documentation features
-
-params:
-  # GitHub repository information
-  github_repo: 'https://github.com/your-org/go-template-project'
-  github_branch: 'main'
-  
-  # Version information
-  version: '1.0.0'
-  version_menu: true
-  
-  # Edit page functionality
-  edit_page: true
-  
-  # Search functionality
-  gcs_engine_id: ''  # Configure for site search
-  
-  # Navigation
-  ui:
-    navbar_logo: true
-    navbar_translucent_over_cover_disable: false
-    sidebar_menu_compact: true
-    sidebar_search_disable: false
-    breadcrumb_disable: false
-    taxonomy_breadcrumb_disable: false
-    footer_about_disable: true
-    
-  # Links for footer and top navigation
-  links:
-    user:
-      - name: "GitHub"
-        url: "https://github.com/your-org/go-template-project"
-        icon: "fab fa-github"
-        desc: "Project repository"
-    developer:
-      - name: "GitHub"
-        url: "https://github.com/your-org/go-template-project"
-        icon: "fab fa-github"
-        desc: "Development happens here!"
-      - name: "Go Package Documentation"
-        url: "/api/"
-        icon: "fas fa-code"
-        desc: "Generated API documentation"
 
 # Menu configuration
 menu:
@@ -71,9 +25,3 @@ markup:
     lineNos: true
     tabWidth: 4
     codeFences: true
-
-# Module configuration for themes
-module:
-  imports:
-    - path: github.com/google/docsy
-      disable: false

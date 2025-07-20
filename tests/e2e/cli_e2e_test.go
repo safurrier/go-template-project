@@ -1,9 +1,9 @@
+//go:build e2e
 // +build e2e
 
 package e2e
 
 import (
-	"os"
 	"os/exec"
 	"testing"
 	"time"
@@ -56,7 +56,6 @@ func TestCLIVersionFlag(t *testing.T) {
 
 	// Act: Execute command
 	output, err := cmd.CombinedOutput()
-
 	// Assert: Should exit successfully and show version
 	if err != nil {
 		t.Fatalf("CLI --version failed: %v\nOutput: %s", err, output)
@@ -94,7 +93,7 @@ func TestCLIHelp(t *testing.T) {
 			if outputStr == "" {
 				t.Fatalf("CLI %s produced no output", flag)
 			}
-			
+
 			// Note: err may be non-nil for help flags, which is normal
 			_ = err // Help flags may exit with non-zero code
 
@@ -135,33 +134,12 @@ func TestCLIInvalidFlag(t *testing.T) {
 
 // Helper functions
 
-func getProjectRoot(t *testing.T) string {
-	// Navigate to project root from tests/e2e/
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get working directory: %v", err)
-	}
-
-	// If we're in tests/e2e, go up two levels
-	if dir := wd; len(dir) > 8 && dir[len(dir)-8:] == "tests/e2e" {
-		return "../.."
-	}
-
-	// If we're already in project root, use current directory
-	if _, err := os.Stat("go.mod"); err == nil {
-		return "."
-	}
-
-	t.Fatal("Could not determine project root directory")
-	return ""
-}
-
 func containsAppInfo(output string) bool {
 	// Look for version information in output
 	// This is intentionally flexible to not couple to specific strings
 	return len(output) > 10 && (
-		// Common patterns for version output
-		contains(output, "version") ||
+	// Common patterns for version output
+	contains(output, "version") ||
 		contains(output, "go-template") ||
 		contains(output, "v1.") ||
 		contains(output, "1.0"))
@@ -169,8 +147,7 @@ func containsAppInfo(output string) bool {
 
 func containsHelpInfo(output string) bool {
 	// Look for help patterns in output
-	return len(output) > 10 && (
-		contains(output, "Usage") ||
+	return len(output) > 10 && (contains(output, "Usage") ||
 		contains(output, "usage") ||
 		contains(output, "help") ||
 		contains(output, "flag") ||
@@ -179,22 +156,8 @@ func containsHelpInfo(output string) bool {
 
 func containsErrorInfo(output string) bool {
 	// Look for error patterns in output
-	return len(output) > 5 && (
-		contains(output, "unknown") ||
+	return len(output) > 5 && (contains(output, "unknown") ||
 		contains(output, "invalid") ||
 		contains(output, "error") ||
 		contains(output, "flag provided but not defined"))
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && indexOf(s, substr) >= 0
-}
-
-func indexOf(s, substr string) int {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
 }

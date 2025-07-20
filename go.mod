@@ -1,4 +1,3 @@
 module github.com/your-org/go-template-project
 
-go 1.22
-
+go 1.23

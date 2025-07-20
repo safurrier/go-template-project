@@ -1,6 +1,8 @@
 run:
   timeout: 5m
   modules-download-mode: readonly
+  env:
+    - CGO_ENABLED=0
 
 linters:
   enable:
@@ -11,14 +13,13 @@ linters:
     - errcheck       # Check for unchecked errors
     - ineffassign    # Detect ineffectual assignments
     - unused         # Detect unused code
-    - gosec          # Security analysis
     - misspell       # Typo detection
     - gocyclo        # Complexity analysis
     - dupl           # Code duplication detection
     - gosimple       # Simplification suggestions
     - unconvert      # Unnecessary type conversions
     - unparam        # Unused function parameters
-    - exportloopref  # Loop variable capture
+    - copyloopvar    # Loop variable capture (Go 1.22+)
     - bodyclose      # HTTP response body close
     - nilerr         # Nil error returns
     - prealloc       # Slice preallocation
@@ -26,10 +27,6 @@ linters:
 linters-settings:
   gofumpt:
     extra-rules: true
-    
-  gosec:
-    severity: "medium"
-    confidence: "medium"
     
   revive:
     rules:

@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -25,9 +27,9 @@ func TestWorkerApplicationLaunches(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/worker")
 	cmd.Dir = getProjectRoot(t)
-	
+
 	// Set test environment with debug enabled to get more output
-	cmd.Env = append(os.Environ(), "DEBUG=true")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "DEBUG=true")
 
 	// Start worker
 	if err := cmd.Start(); err != nil {
@@ -50,9 +52,9 @@ func TestWorkerApplicationLaunches(t *testing.T) {
 		t.Fatal("Worker exited unexpectedly")
 	}
 
-	// Send interrupt signal for graceful shutdown
-	if err := cmd.Process.Signal(os.Interrupt); err != nil {
-		t.Fatalf("Failed to send interrupt signal to worker: %v", err)
+	// Send SIGTERM signal for graceful shutdown
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatalf("Failed to send SIGTERM signal to worker: %v", err)
 	}
 
 	// Wait for graceful shutdown
@@ -67,7 +69,8 @@ func TestWorkerApplicationLaunches(t *testing.T) {
 		if err != nil {
 			// Check if it's a signal termination (expected)
 			if exitError, ok := err.(*exec.ExitError); ok {
-				if exitError.ExitCode() == 130 { // SIGINT exit code
+				// SIGTERM exit code is typically 143, SIGINT is 130
+				if exitError.ExitCode() == 143 || exitError.ExitCode() == 130 {
 					// This is expected for graceful shutdown
 					return
 				}
@@ -96,7 +99,7 @@ func TestWorkerTaskProcessing(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, "go", "run", "./cmd/worker")
 	cmd.Dir = getProjectRoot(t)
-	cmd.Env = append(os.Environ(), "DEBUG=true")
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "DEBUG=true")
 
 	// Capture output to verify worker is processing tasks
 	stdout, err := cmd.StdoutPipe()
@@ -184,7 +187,9 @@ func TestWorkerConfiguration(t *testing.T) {
 
 			cmd := exec.CommandContext(ctx, "go", "run", "./cmd/worker")
 			cmd.Dir = getProjectRoot(t)
-			cmd.Env = append(os.Environ(), tc.env...)
+			cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+			cmd.Env = append(cmd.Env, "WORKER_TASK_INTERVAL=2s") // Faster for testing
+			cmd.Env = append(cmd.Env, tc.env...)
 
 			// Capture output
 			stdout, err := cmd.StdoutPipe()
@@ -302,8 +307,7 @@ func captureOutput(stdout, stderr io.Reader, duration time.Duration) string {
 func containsWorkerActivity(output string) bool {
 	// Look for signs that the worker is actively processing
 	// This is flexible to avoid coupling to exact log messages
-	return len(output) > 10 && (
-		contains(output, "Worker") ||
+	return len(output) > 10 && (contains(output, "Worker") ||
 		contains(output, "worker") ||
 		contains(output, "started") ||
 		contains(output, "processing") ||
@@ -312,13 +316,12 @@ func containsWorkerActivity(output string) bool {
 		contains(output, "completed") ||
 		contains(output, "🚀") || // Emoji used in worker startup
 		contains(output, "📋") || // Emoji used in task processing
-		contains(output, "✅"))   // Emoji used in task completion
+		contains(output, "✅")) // Emoji used in task completion
 }
 
 func containsDebugInfo(output string) bool {
 	// Look for debug-level information
-	return len(output) > 5 && (
-		contains(output, "debug") ||
+	return len(output) > 5 && (contains(output, "debug") ||
 		contains(output, "DEBUG") ||
 		contains(output, "Processing task") ||
 		contains(output, "Task completed") ||

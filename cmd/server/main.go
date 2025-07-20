@@ -25,15 +25,18 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	
+
 	// Health endpoints
 	mux.HandleFunc("/health", handlers.HealthCheck(appVersion))
 	mux.HandleFunc("/ready", handlers.ReadinessCheck())
-	
+
 	// Example API endpoint
 	mux.HandleFunc("/api/info", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"name":"` + appName + `","version":"` + appVersion + `"}`))
+		_, err := w.Write([]byte(`{"name":"` + appName + `","version":"` + appVersion + `"}`))
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 	})
 
 	server := &http.Server{
