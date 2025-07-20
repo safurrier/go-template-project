@@ -154,6 +154,11 @@ func initializeProject(config *ProjectConfig) error {
 		return fmt.Errorf("failed to remove unwanted components: %w", err)
 	}
 
+	// Clean up template artifacts
+	if err := cleanupTemplateArtifacts(config); err != nil {
+		return fmt.Errorf("failed to clean up template artifacts: %w", err)
+	}
+
 	// Generate README
 	if err := generateReadme(config); err != nil {
 		return fmt.Errorf("failed to generate README: %w", err)
@@ -173,6 +178,19 @@ func initializeProject(config *ProjectConfig) error {
 	if err := setupPreCommitHooks(); err != nil {
 		fmt.Printf("⚠️  Failed to setup pre-commit hooks: %v\n", err)
 		fmt.Println("   You can set them up later with: pre-commit install")
+	}
+
+	// Final cleanup: Remove the init script itself
+	fmt.Println("🗑️  Removing initialization script...")
+	if err := os.Remove("scripts/init.go"); err != nil {
+		fmt.Printf("⚠️  Failed to remove init script: %v\n", err)
+		fmt.Println("   You can remove it manually: rm scripts/init.go")
+	}
+
+	// Remove scripts directory if it's now empty
+	if err := removeEmptyDirectory("scripts"); err != nil {
+		// Non-critical, just log
+		fmt.Printf("ℹ️  Could not remove scripts directory: %v\n", err)
 	}
 
 	return nil
@@ -265,12 +283,427 @@ func removeUnwantedComponents(config *ProjectConfig) error {
 	return nil
 }
 
+func cleanupTemplateArtifacts(config *ProjectConfig) error {
+	fmt.Println("🧹 Cleaning up template artifacts...")
+
+	// Always remove template-specific files
+	templateFiles := []string{
+		"tests/e2e/init_e2e_test.go", // Tests the init script itself
+	}
+
+	for _, file := range templateFiles {
+		if err := removeFileIfExists(file); err != nil {
+			return fmt.Errorf("failed to remove %s: %w", file, err)
+		}
+	}
+
+	// Remove component-specific E2E tests based on selection
+	if config.EnableE2ETests {
+		if !config.EnableCLI {
+			if err := removeFileIfExists("tests/e2e/cli_e2e_test.go"); err != nil {
+				return err
+			}
+		}
+		if !config.EnableServer {
+			if err := removeFileIfExists("tests/e2e/server_e2e_test.go"); err != nil {
+				return err
+			}
+		}
+		if !config.EnableWorker {
+			if err := removeFileIfExists("tests/e2e/worker_e2e_test.go"); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Remove template references from documentation
+	if config.EnableDocs {
+		if err := cleanupDocumentationReferences(config); err != nil {
+			return fmt.Errorf("failed to cleanup documentation: %w", err)
+		}
+	}
+
+	// Final step: Schedule init script for removal (will remove itself at the end)
+	// We can't remove it now since we're running from it
+	fmt.Println("   ✅ Scheduled init script for removal")
+
+	return nil
+}
+
+func removeFileIfExists(filepath string) error {
+	if _, err := os.Stat(filepath); err == nil {
+		fmt.Printf("   🗑️  Removing %s\n", filepath)
+		return os.Remove(filepath)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
+func removeEmptyDirectory(dirpath string) error {
+	// Check if directory exists
+	if _, err := os.Stat(dirpath); os.IsNotExist(err) {
+		return nil
+	}
+
+	// Try to remove directory (will only succeed if empty)
+	return os.Remove(dirpath)
+}
+
+func cleanupDocumentationReferences(config *ProjectConfig) error {
+	// Update Hugo documentation files to remove template references
+	docFiles := map[string]func(*ProjectConfig) string{
+		"docs/content/_index.md":               updateIndexMarkdown,
+		"docs/content/docs/getting-started.md": updateGettingStartedMarkdown,
+	}
+
+	for file, updateFunc := range docFiles {
+		if err := updateDocumentationFile(file, updateFunc, config); err != nil {
+			return fmt.Errorf("failed to update %s: %w", file, err)
+		}
+	}
+
+	return nil
+}
+
+func updateDocumentationFile(filepath string, updateFunc func(*ProjectConfig) string, config *ProjectConfig) error {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		return nil // File doesn't exist, nothing to update
+	}
+
+	newContent := updateFunc(config)
+	return os.WriteFile(filepath, []byte(newContent), 0o644)
+}
+
+func updateIndexMarkdown(config *ProjectConfig) string {
+	return fmt.Sprintf(`---
+title: "%s"
+linkTitle: "%s"
+description: "%s"
+---
+
+# %s
+
+%s
+
+## 🚀 Quick Start
+
+`+"```bash"+`
+# Get started with your project
+make setup     # Install development tools
+make check     # Verify everything works
+%s%s`+"```"+`
+
+## ✨ Features
+
+This project provides a production-ready Go application with:
+
+- **🏗️ Standard Project Layout** - Follows Go community best practices
+- **🔧 Complete Toolchain** - golangci-lint, gofumpt, comprehensive quality gates
+- **🧪 Progressive Testing** - Unit, integration, smoke%s tests
+- **📦 Container Ready** - Multi-stage builds with distroless images (~10MB)
+- **🚀 CI/CD Ready** - GitHub Actions for testing, security, and releases%s
+- **⚡ Quality Gates** - Pre-commit hooks and comprehensive checks
+
+## 🏛️ Architecture
+
+%s
+
+## 🎯 Getting Started
+
+1. **Install Development Tools**
+   `+"```bash"+`
+   make setup
+   `+"```"+`
+
+2. **Run Quality Checks**
+   `+"```bash"+`
+   make check
+   `+"```"+`
+
+3. **Build and Run**
+   `+"```bash"+`
+   make build
+%s   `+"```"+`
+
+## 🛠️ Development
+
+This project follows the **MODEST** principles for maintainable Go code:
+
+- **Modularity** - Reusable, swappable components
+- **Orthogonality** - Independent components with localized changes
+- **Dependency Injection** - External dependencies passed explicitly
+- **Explicitness** - Clear intent without magic
+- **Single Responsibility** - Each component has one reason to change
+- **Testability** - Designed for easy testing
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Run `+"```make check```"+` to ensure quality
+4. Submit a pull request
+
+## 📝 License
+
+This project is available under the %s License.
+`,
+		config.ProjectName,
+		config.ProjectName,
+		config.Description,
+		config.ProjectName,
+		config.Description,
+		generateRunCommands(config),
+		"",
+		generateTestingFeatures(config),
+		generateDocumentationFeature(config),
+		generateComponentDescription(config),
+		generateRunCommands(config),
+		config.License,
+	)
+}
+
+func updateGettingStartedMarkdown(config *ProjectConfig) string {
+	return fmt.Sprintf(`---
+title: "Getting Started"
+linkTitle: "Getting Started"
+weight: 1
+description: "Complete setup guide for %s"
+---
+
+# Getting Started
+
+This guide will help you set up and start developing with %s.
+
+## Prerequisites
+
+Ensure you have the following installed:
+
+- **Go 1.23+** - [Install from golang.org](https://golang.org/downloads/)
+- **Git** - For version control
+- **Make** - For build automation
+- **Docker** (optional) - For containerized development
+
+`+"```bash"+`
+# Verify installations
+go version    # Should show Go 1.23+
+git --version
+make --version
+docker --version
+`+"```"+`
+
+## Development Workflow
+
+### Daily Development
+
+1. **Make changes** to your code
+2. **Run quality checks** frequently:
+   `+"```bash"+`
+   make fmt    # Format code
+   make test   # Run tests
+   make lint   # Check for issues
+   `+"```"+`
+3. **Build and test** your applications:
+   `+"```bash"+`
+   make build
+%s   `+"```"+`
+
+### Quality Gates
+
+The project enforces quality through multiple gates:
+
+#### Pre-commit Hooks
+Automatically installed during setup:
+- Code formatting validation
+- Basic linting checks
+- Test execution
+
+#### Comprehensive Checks
+Run the full quality gate before commits:
+`+"```bash"+`
+make check
+`+"```"+`
+
+## Building Applications
+
+### Local Development
+
+`+"```bash"+`
+# Build all applications
+make build
+
+# Run specific applications
+%s
+# Cross-platform builds
+make build-all
+`+"```"+`
+
+### Docker Development
+
+`+"```bash"+`
+# Build Docker image
+make docker-build
+
+# Run in container
+make docker-run
+`+"```"+`
+
+%s
+
+## Next Steps
+
+Now that your project is set up:
+
+1. **Review the project structure** and customize as needed
+2. **Start implementing your business logic**
+3. **Add tests** for new functionality
+4. **Update documentation** as you add features
+
+## Troubleshooting
+
+### Common Issues
+
+**Go modules not working:**
+`+"```bash"+`
+go mod tidy
+go mod download
+`+"```"+`
+
+**Linter failures:**
+`+"```bash"+`
+make fmt      # Fix formatting
+make lint     # See specific issues
+`+"```"+`
+
+**Test failures:**
+`+"```bash"+`
+make test-unit     # Run unit tests only
+go test -v ./...   # Verbose test output
+`+"```"+`
+
+**Docker build issues:**
+`+"```bash"+`
+make clean         # Clean build artifacts
+make docker-build  # Rebuild image
+`+"```"+`
+
+### Getting Help
+
+- Review the [README.md](../) for project overview
+- Check the codebase for examples and patterns
+- File issues on your project repository for bugs or questions
+`,
+		config.ProjectName,
+		config.ProjectName,
+		generateRunCommands(config),
+		generateRunCommands(config),
+		generateTestingSection(config),
+	)
+}
+
+// Helper functions for dynamic content generation
+
+func generateComponentDescription(config *ProjectConfig) string {
+	components := []string{}
+	if config.EnableCLI {
+		components = append(components, "**CLI Application** - Command-line interface with flags and subcommands")
+	}
+	if config.EnableServer {
+		components = append(components, "**HTTP Server** - REST API with graceful shutdown and health checks")
+	}
+	if config.EnableWorker {
+		components = append(components, "**Background Worker** - Long-running process with signal handling")
+	}
+
+	if len(components) == 0 {
+		return "This project provides a foundation for building Go applications with clean architecture patterns."
+	}
+
+	if len(components) == 1 {
+		return fmt.Sprintf("This project includes:\n\n- %s", components[0])
+	}
+
+	result := "This project includes multiple components:\n\n"
+	for _, component := range components {
+		result += fmt.Sprintf("- %s\n", component)
+	}
+	return result
+}
+
+func generateRunCommands(config *ProjectConfig) string {
+	commands := []string{}
+	if config.EnableCLI {
+		commands = append(commands, "make run-cli      # Run CLI application")
+	}
+	if config.EnableServer {
+		commands = append(commands, "make run-server   # Run HTTP server")
+	}
+	if config.EnableWorker {
+		commands = append(commands, "make run-worker   # Run background worker")
+	}
+
+	if len(commands) == 0 {
+		return "go run ./..."
+	}
+
+	result := ""
+	for _, cmd := range commands {
+		result += fmt.Sprintf("   %s\n", cmd)
+	}
+	return result
+}
+
+func generateTestingFeatures(config *ProjectConfig) string {
+	if config.EnableE2ETests {
+		return ", and E2E"
+	}
+	return ""
+}
+
+func generateDocumentationFeature(config *ProjectConfig) string {
+	if config.EnableDocs {
+		return "\n- **📚 Documentation** - Hugo-powered static site with auto-generated API docs"
+	}
+	return ""
+}
+
+func generateTestingSection(config *ProjectConfig) string {
+	if !config.EnableE2ETests {
+		return ""
+	}
+
+	return `## Testing Strategy
+
+The project implements a progressive testing approach:
+
+### Test Categories
+
+` + "```bash" + `
+# Unit tests (fast, isolated)
+make test-unit
+
+# Integration tests (component interactions)
+make test-integration
+
+# Smoke tests (critical path validation)
+make test-smoke
+
+# End-to-end tests (complete user journeys)
+make test-e2e
+
+# All tests
+make test-all
+` + "```" + `
+
+`
+}
+
 func generateReadme(config *ProjectConfig) error {
 	readmeTemplate := `# {{.ProjectName}}
 
 > {{.Description}}
 
-Built from the [go-template-project](https://github.com/your-org/go-template-project) 
+Built from the [go-template-project](https://github.com/your-org/go-template-project)
 starter template - providing quality gates, container deployment, and CI/CD without setup time.
 
 ## Quick Start
@@ -288,7 +721,7 @@ make check     # Verify everything works
 
 **Zero-config development environment:**
 - Formatting and linting that matches your CI
-- Pre-commit hooks prevent broken commits  
+- Pre-commit hooks prevent broken commits
 - Test coverage tracking with Codecov
 - Security scanning built in
 
@@ -367,7 +800,7 @@ Configure via environment variables:
 
 ---
 
-*Generated from [go-template-project](https://github.com/your-org/go-template-project) - 
+*Generated from [go-template-project](https://github.com/your-org/go-template-project) -
 A batteries-included Go starter template.*
 `
 
