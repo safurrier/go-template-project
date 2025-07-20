@@ -32,7 +32,15 @@ func NewWorker(cfg *config.Config) *Worker {
 
 // Start begins the worker processing loop.
 func (w *Worker) Start(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Second)
+	// Allow configuring task interval for testing
+	interval := 10 * time.Second
+	if testInterval := os.Getenv("WORKER_TASK_INTERVAL"); testInterval != "" {
+		if d, err := time.ParseDuration(testInterval); err == nil {
+			interval = d
+		}
+	}
+
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	log.Printf("🚀 Worker %s v%s started", appName, appVersion)

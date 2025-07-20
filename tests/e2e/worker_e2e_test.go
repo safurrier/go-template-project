@@ -188,6 +188,7 @@ func TestWorkerConfiguration(t *testing.T) {
 			cmd := exec.CommandContext(ctx, "go", "run", "./cmd/worker")
 			cmd.Dir = getProjectRoot(t)
 			cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+			cmd.Env = append(cmd.Env, "WORKER_TASK_INTERVAL=2s") // Faster for testing
 			cmd.Env = append(cmd.Env, tc.env...)
 
 			// Capture output
