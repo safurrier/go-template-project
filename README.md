@@ -12,7 +12,7 @@ cd my-new-project
 go run scripts/init.go    # Interactive project setup
 make setup               # Install development tools
 make check               # Verify everything works
-go run ./cmd/cli         # Test the CLI
+go run ./cmd/cli --help  # Discover the live telemetry dashboard options
 ```
 
 ## What You Get
@@ -104,6 +104,60 @@ make run-cli        # Run CLI application
 make run-server     # Run HTTP server
 make run-worker     # Run background worker
 ```
+
+### Live F1 Telemetry Dashboard
+
+The Bubbletea-powered CLI streams timing data from the [OpenF1 API](https://api.openf1.org) and presents it with live updates.
+
+```bash
+# Follow the latest session and focus on driver VER
+go run ./cmd/cli --driver VER
+
+# Inspect a historic session
+go run ./cmd/cli --session 9896 --refresh 10s
+
+# Override the telemetry API endpoint
+go run ./cmd/cli --api https://api.openf1.org/v1 --driver 44
+```
+
+Use the arrow keys to move between drivers, `q` to quit, and the `--refresh` flag to control the polling interval. When live data is unavailable the dashboard stays open and continues to poll automatically.
+
+#### undercut-f1 parity features
+
+The dashboard now mirrors the flagship views from [undercut-f1](https://github.com/JustAman62/undercut-f1) so you can keep tabs on a session without leaving the terminal:
+
+- **Timing Tower** – tabular view with tyre compound and age, last/best lap, sector splits, cumulative interval, gap to the leader, and relative delta to the currently selected driver.
+- **Race Control** – chronological feed of steward messages with lap references, flag state, and affected drivers.
+- **Tyre Strategy** – stint breakdown per driver highlighting compound changes and lap ranges.
+- **Driver Tracker** – gap-based track strip that highlights each driver, making it easy to visualise pit windows without GPS data.
+- **Lap History** – rolling table of the latest laps for the focused driver including deltas to the previous and best laps plus sector performance.
+
+The tracker view approximates car placement using timing gaps because OpenF1 does not expose live GPS coordinates, and team radio playback remains out of scope for now.
+
+### Phased Feature Plan
+
+To progressively mirror the experience provided by [undercut-f1](https://github.com/JustAman62/undercut-f1), the dashboard evolves through the following phases:
+
+1. **Phase 1 – Multi-view timing workspace**
+   - Introduce a tabbed layout with a persistent header/footer.
+   - Preserve the timing tower as the primary view while preparing the model for additional panes.
+   - Add keyboard navigation for switching between views without disrupting driver selection.
+2. **Phase 2 – Race control stream**
+   - Ingest race control messages from the OpenF1 feed.
+   - Surface categorized messages in a dedicated view with clear timestamping and driver attribution.
+   - Refresh the feed on the same cadence as the timing tower to keep control updates current.
+3. **Phase 3 – Tyre strategy overview**
+   - Fetch tyre stint data for every driver and group it alongside the timing tower roster.
+   - Display compound, lap range, and tyre age details so offset strategies are obvious at a glance.
+   - Keep strategy information synchronized with timing updates so it stays relevant throughout the session.
+4. **Phase 4 – Driver tracker strip**
+   - Recreate undercut-f1’s tracker view by projecting gaps onto a track strip and highlighting the active driver.
+   - Surface gap-to-leader and gap-to-selected metrics beside each driver entry.
+5. **Phase 5 – Lap history timeline**
+   - Provide a lap-by-lap table with delta-to-previous and delta-to-best comparisons alongside sector splits.
+   - Automatically refresh the history view when the focused driver completes a lap.
+
+All five phases are implemented in this iteration so the CLI delivers timing, race control, strategy, tracker, and lap history insights in a single cohesive interface.
 
 ### Container Operations
 ```bash
