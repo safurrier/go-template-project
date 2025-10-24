@@ -511,7 +511,10 @@ func (s *Service) get(ctx context.Context, path string, params url.Values, out a
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, 512))
+		if readErr != nil {
+			return fmt.Errorf("unexpected status %d: unable to read body: %w", resp.StatusCode, readErr)
+		}
 		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 

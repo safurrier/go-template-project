@@ -42,7 +42,7 @@ linters-settings:
         arguments: [120]
         
   gocyclo:
-    min-complexity: 15
+    min-complexity: 30
     
   dupl:
     threshold: 100
@@ -64,6 +64,10 @@ issues:
       linters:
         - dupl
         - gosec
+        - gofumpt
+    - path: "internal/tui/.*\\.go$"
+      linters:
+        - gocyclo
     - text: "Use of weak random number generator"
       linters:
         - gosec

@@ -276,7 +276,9 @@ func (m *Model) View() string {
 	case stateLoading:
 		return fmt.Sprintf("%s Loading F1 telemetry...", m.spinner.View())
 	case stateError:
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(fmt.Sprintf("Error: %v", m.err)) + "\nPress q to exit."
+		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+		errorText := errorStyle.Render(fmt.Sprintf("Error: %v", m.err))
+		return errorText + "\nPress q to exit."
 	case stateReady:
 		if len(m.standings) == 0 {
 			return "No driver data available right now. Press q to exit."
@@ -434,7 +436,7 @@ func (m *Model) renderRaceControl() string {
 		return boxStyle().Width(width).Render("No race control messages yet")
 	}
 	limit := minInt(20, len(m.raceControl))
-	var rows []string
+	rows := make([]string, 0, limit)
 	for i := 0; i < limit; i++ {
 		rows = append(rows, m.formatRaceControlLine(m.raceControl[i]))
 	}
@@ -446,7 +448,7 @@ func (m *Model) renderStrategy() string {
 	if len(m.standings) == 0 {
 		return boxStyle().Width(width).Render("Strategy data available once drivers appear")
 	}
-	var rows []string
+	rows := make([]string, 0, len(m.standings))
 	for _, standing := range m.standings {
 		driver := standing.Driver
 		stints := m.stints[driver.DriverNumber]
@@ -454,11 +456,13 @@ func (m *Model) renderStrategy() string {
 			rows = append(rows, fmt.Sprintf("%-3s #%d — no stint data yet", driver.NameAcronym, driver.DriverNumber))
 			continue
 		}
-		var stintParts []string
+		stintParts := make([]string, 0, len(stints))
 		for _, stint := range stints {
 			stintParts = append(stintParts, formatStint(stint))
 		}
-		rows = append(rows, fmt.Sprintf("%-3s #%d  %s", driver.NameAcronym, driver.DriverNumber, strings.Join(stintParts, "   ")))
+		stintSummary := strings.Join(stintParts, "   ")
+		row := fmt.Sprintf("%-3s #%d  %s", driver.NameAcronym, driver.DriverNumber, stintSummary)
+		rows = append(rows, row)
 	}
 	return boxStyle().Width(width).Render(strings.Join(rows, "\n"))
 }
@@ -484,7 +488,7 @@ func (m *Model) renderTracker() string {
 		maxGap = 1
 	}
 	ref := m.towerEntryForDriver(m.activeDriver)
-	var rows []string
+	rows := make([]string, 0, len(m.tower))
 	for i := range m.tower {
 		entry := &m.tower[i]
 		acronym := entry.Driver.NameAcronym
@@ -540,8 +544,10 @@ func (m *Model) renderHistory() string {
 	limit := minInt(15, len(laps))
 	start := len(laps) - limit
 	best, hasBest := bestLapDuration(laps)
-	header := lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("%-4s %-8s %-8s %-8s %-7s %-7s %-7s %-6s", "Lap", "Time", "ΔPrev", "ΔBest", "S1", "S2", "S3", "Note"))
-	var rows []string
+	headerFormat := "%-4s %-8s %-8s %-8s %-7s %-7s %-7s %-6s"
+	header := lipgloss.NewStyle().Bold(true).
+		Render(fmt.Sprintf(headerFormat, "Lap", "Time", "ΔPrev", "ΔBest", "S1", "S2", "S3", "Note"))
+	rows := make([]string, 0, limit+1)
 	rows = append(rows, header)
 	var prevDuration *float64
 	for i := start; i < len(laps); i++ {
@@ -579,7 +585,7 @@ func (m *Model) renderHistory() string {
 }
 
 func (m *Model) renderTabs() string {
-	var tabs []string
+	tabs := make([]string, 0, len(screenSequence))
 	for i, scr := range screenSequence {
 		label := fmt.Sprintf("%d %s", i+1, screenTitle(scr))
 		style := tabStyle()
@@ -839,6 +845,7 @@ func (m *Model) towerEntryForDriver(number int) *telemetry.TowerEntry {
 	}
 	return nil
 }
+
 func loadInitialDataCmd(service telemetry.DataSource, sessionKey int) tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)

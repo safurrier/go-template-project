@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -57,13 +58,21 @@ func lapsKey(v url.Values) string {
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json")
 	if v == nil {
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("[]"))
+		if _, err := w.Write([]byte("[]")); err != nil {
+			panic(fmt.Sprintf("write empty response: %v", err))
+		}
 		return
 	}
-	data, _ := json.Marshal(v)
-	_, _ = w.Write(data)
+	data, err := json.Marshal(v)
+	if err != nil {
+		panic(fmt.Sprintf("marshal response: %v", err))
+	}
+	if _, err := w.Write(data); err != nil {
+		panic(fmt.Sprintf("write response: %v", err))
+	}
 }
 
 func TestServiceDriverStandings(t *testing.T) {
