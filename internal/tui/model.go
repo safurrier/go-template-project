@@ -846,6 +846,8 @@ func (m *Model) towerEntryForDriver(number int) *telemetry.TowerEntry {
 	return nil
 }
 
+// loadInitialDataCmd fetches the session, tower, lap history, and driver list
+// required for the initial dashboard render in a single call.
 func loadInitialDataCmd(service telemetry.DataSource, sessionKey int) tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)

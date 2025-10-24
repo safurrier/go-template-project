@@ -3,6 +3,11 @@ GOTEST_FLAGS    ?= -covermode=atomic -coverprofile=coverage.out ./...
 GOLANGCI_FLAGS  ?= --timeout=5m
 COVERAGE_MIN    ?= 0
 
+GOFUMPT_BIN    ?= $(shell command -v gofumpt 2>/dev/null)
+ifeq ($(strip $(GOFUMPT_BIN)),)
+GOFUMPT_BIN    := $(shell go env GOPATH)/bin/gofumpt
+endif
+
 .PHONY: help setup init tidy fmt vet lint test coverage check ci clean
 .PHONY: build build-all run-cli run-server run-worker
 .PHONY: docker-build docker-run docker-dev
@@ -33,7 +38,7 @@ tidy: ## Clean and update go.mod/go.sum
 ## Code Quality
 fmt: ## Format code with gofumpt
 	@echo "🎨 Formatting code..."
-	$(shell go env GOPATH)/bin/gofumpt -w .
+	$(GOFUMPT_BIN) -w .
 
 vet: ## Run built-in static analysis
 	@echo "🔍 Running go vet..."
