@@ -50,3 +50,7 @@ vendor/
 docs/public/
 docs/resources/
 docs/content/api/
+
+# Frontend artifacts
+frontend/node_modules/
+frontend/.next/
